@@ -5,7 +5,6 @@ from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 
-
 # init app
 app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -67,6 +66,8 @@ pdis_schema = PDISchema(many=True)
 tournee_schema = TourneeSchema()
 tournees_schema = TourneeSchema(many=True)
 
+
+
 # création d'une tournée
 @app.route("/tournee", methods = ["POST"])
 def add_tournee():
@@ -102,11 +103,99 @@ def add_pdi():
 @app.route("/tournee", methods = ["GET"])
 def get_tournees():
     all_tournees = Tournee.query.all()
-    result = tournee_schema.dump(all_tournees)
+    result = tournees_schema.dump(all_tournees)
+    return jsonify(result)
+
+
+# get all pdis
+@app.route("/pdi", methods = ["GET"])
+def get_pdis():
+    all_pdis = PDI.query.all()
+    result = pdis_schema.dump(all_pdis)
     return jsonify(result)
 
 
 
+# get une tournée
+@app.route("/tournee/<id>", methods = ["GET"])
+def get_tournee(id):
+    tournee = Tournee.query.get(id)
+    return tournee_schema.jsonify(tournee)
+
+
+# get un pdi
+@app.route("/pdi/<id>", methods = ["GET"])
+def get_pdi(id):
+    pdi = PDI.query.get(id)
+    return pdi_schema.jsonify(pdi)
+
+
+#update une tournee
+@app.route("/tournee/<id>", methods = ["PUT"])
+def update_tournee(id):
+    tournee = Tournee.query.get(id)
+
+    numero = request.json["numero"]
+    date_crea = request.json["date_crea"]
+    date_maj = request.json["date_maj"]
+
+    tournee.numero = numero
+    tournee.date_maj = datetime.datetime.now()
+
+    db.session.commit()
+    return tournee_schema.jsonify(tournee)
+
+#update un pdi
+@app.route("/pdi/<id>", methods = ["PUT"])
+def update_pdi(id):
+    pdi = PDI.query.get(id)
+
+    noms = request.json["noms"]
+    adresse = request.json["adresse"]
+    depot = request.json["depot"]
+    tournee = request.json["tournee"]
+    ordre = request.json["ordre"]
+    date_crea = request.json["date_crea"]
+    date_maj = request.json["date_maj"]
+
+    pdi.noms = noms
+    pdi.adresse = adresse
+    pdi.depot = depot
+    pdi.tournee = tournee
+    pdi.ordre = ordre
+    pdi.date_maj = datetime.datetime.now()
+
+    db.session.commit()
+    return pdi_schema.jsonify(pdi)
+
+
+# delete tournee
+@app.route("/tournee/<id>", methods = ["DELETE"])
+def delete_tournee(id):
+    tournee = Tournee.query.get(id)
+    db.session.delete(tournee)
+    db.session.commit()
+
+    return tournee_schema.jsonify(tournee)
+
+
+# delete pdi
+@app.route("/pdi/<id>", methods = ["DELETE"])
+def delete_pdi(id):
+    pdi = PDI.query.get(id)
+    db.session.delete(pdi)
+    db.session.commit()
+
+    return pdi_schema.jsonify(pdi)
+
+
+
+# GET pdis par tournée order by ordre
+@app.route("/tournee/<id>/pdis", methods = ["GET"])
+def get_pdis_from_tournee_orderby_ordre(id):
+    pdis = PDI.query.filter_by(tournee = id).order_by(PDI.ordre).all()
+    result = pdis_schema.dump(pdis)
+    return jsonify(result)
 
 
 
