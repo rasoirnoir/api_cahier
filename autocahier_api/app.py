@@ -3,9 +3,9 @@
 import os, datetime, jwt, uuid
 from flask import Flask, jsonify, request
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_sqlalchemy import SQLAlchemy
-from flask_marshmallow import Marshmallow
 from functools import wraps
+from model import db, ma
+from model import User, Tournee, PDI, UserSchema, TourneeSchema, PDISchema
 
 # init app
 app = Flask(__name__)
@@ -15,80 +15,11 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'db
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = "1S3CR3T_K3Y1"
 # database init
-db = SQLAlchemy(app)
+#db = SQLAlchemy(app)
 # marshmallow init
-ma = Marshmallow(app)
-
-# class PDI
-class PDI(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    noms = db.Column(db.String)
-    adresse = db.Column(db.String, nullable=False)
-    depot = db.Column(db.Boolean)
-    tournee = db.Column(db.Integer, db.ForeignKey('tournee.id'), nullable=True)
-    ordre = db.Column(db.Integer)
-    date_crea = db.Column(db.DateTime)
-    date_maj = db.Column(db.DateTime)
-
-    def __init__(self, noms, adresse, depot, tournee, ordre, date_crea, date_maj):
-        self.noms = noms
-        self.adresse = adresse
-        self.depot = depot
-        self.tournee = tournee
-        self.ordre = ordre
-        self.date_crea = date_crea
-        self.date_maj = date_maj
-
-#class Tournee
-class Tournee(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    numero = db.Column(db.Integer, unique=True)
-    # pdis = db.Relationship('PDI', backref='pdi', lazy=True)
-    date_crea = db.Column(db.DateTime)
-    date_maj = db.Column(db.DateTime)
-
-    def __init__(self, numero, date_crea, date_maj):
-        self.numero = numero
-        self.date_crea = date_crea
-        self.date_maj = date_maj
-    
-
-# Classe User
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    public_id = db.Column(db.Integer)
-    name = db.Column(db.String(50))
-    #password = db.Column(db.String(50))
-    password = db.Column(db.String)
-    admin = db.Column(db.Boolean)
-    date_crea = db.Column(db.DateTime)
-    date_maj = db.Column(db.DateTime)
-
-    def __init__(self, public_id, name, password, admin, date_crea, date_maj):
-        self.public_id = public_id
-        self.name = name
-        self.password = password
-        self.admin = admin
-        self.date_crea = date_crea
-        self.date_maj = date_maj
-
-
-#PDI schema
-class PDISchema(ma.Schema):
-    class Meta:
-        fields = ('id', 'noms', 'adresse', 'depot', 'tournee', 'ordre', 'date_crea', 'date_maj')
-
-#Tournee schema
-class TourneeSchema(ma.Schema):
-    class Meta:
-        fields = ('id', 'numero', 'date_crea', 'date_maj')
-
-
-#User schema
-class UserSchema(ma.Schema):
-    class Meta:
-        fields = ('id', 'public_id', 'name', 'password', 'admin', 'date_crea', 'date_maj')
-
+#ma = Marshmallow(app)
+db.init_app(app)
+ma.init_app(app)
 
 # Init schema
 pdi_schema = PDISchema()
@@ -114,12 +45,13 @@ def token_required(f):
             return jsonify({'message': 'a valid token is missing'})
 
         try:
-            data = jwt.decode(token, app.config['SECRET_KEY'])
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms='HS256')
             current_user = User.query.filter_by(public_id=data['public_id']).first()
         except:
             return jsonify({'message': 'token is invalid'})
 
-        return f(current_user, *args, **kwargs)
+        # return f(current_user, *args, **kwargs)
+        return f(*args, **kwargs)
     return decorator
 
 
@@ -280,9 +212,8 @@ def register_user():
     return user_schema.jsonify(new_user)
 
 # connexion d'un utilisateur
-@app.route('/login', methods=['GET', 'POST'])  
+@app.route('/login', methods=['GET', 'POST'])
 def login_user():
-    #TODO: error could not login alors que le psswd est le bon
     auth = request.authorization
 
     if not auth or not auth.username or not auth.password:
@@ -292,8 +223,8 @@ def login_user():
 
     #login_key = hashlib.pbkdf2_hmac('sha256', auth.password.encode('utf-8'), bytes(app.config['SECRET_KEY'], "utf-8"), 100000)
         
-    if (check_password_hash(user.password, auth.password)):  
-        token = jwt.encode({'public_id': user.public_id, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config['SECRET_KEY'])
+    if (check_password_hash(user.password, auth.password)):
+        token = jwt.encode({'public_id': user.public_id, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config['SECRET_KEY'], algorithm='HS256')
         return jsonify({'token' : bytes(token, "utf-8").decode('UTF-8')})
 
     return jsonify({"message" : "could not login..."})
@@ -311,7 +242,6 @@ def get_users():
 
 
 def main():
-    print("{} is running.".format(__file__.split("/")[len(__file__.split("/")) - 1]))
     app.run(debug=True)
 
 if __name__ == "__main__":
