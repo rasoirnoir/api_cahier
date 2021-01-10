@@ -6,14 +6,15 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from model import db, ma
 from model import User, Tournee, PDI, UserSchema, TourneeSchema, PDISchema
+import config
 
 # init app
 app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
 # database setup
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'db.sqlite')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = "1S3CR3T_K3Y1"
+app.config['SQLALCHEMY_DATABASE_URI'] = config.DATABASE_URI
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = config.TRACK_MOD
+app.config['SECRET_KEY'] = config.SECRET_KEY
 # database init
 #db = SQLAlchemy(app)
 # marshmallow init
@@ -233,6 +234,7 @@ def login_user():
 
 # get la liste des utilisateurs
 @app.route("/users", methods = ["GET"])
+@token_required
 def get_users():
     users = User.query.all()
     result = users_schema.dump(users)
