@@ -5,9 +5,9 @@ import os, datetime, jwt, uuid
 from flask import Flask, jsonify, request
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
-from model import db, ma
-from model import User, Tournee, PDI, UserSchema, TourneeSchema, PDISchema
-import config
+from autocahier_api.model import db, ma
+from autocahier_api.model import User, Tournee, PDI, UserSchema, TourneeSchema, PDISchema
+import autocahier_api.config as config
 
 # init app
 app = Flask(__name__)
