@@ -5,9 +5,9 @@ import os, datetime, jwt, uuid
 from flask import Flask, jsonify, request
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
-from autocahier_api.model import db, ma
-from autocahier_api.model import User, Tournee, PDI, UserSchema, TourneeSchema, PDISchema
-import autocahier_api.config as config
+from model import db, ma
+from model import User, Tournee, PDI, UserSchema, TourneeSchema, PDISchema
+import config as config
 
 # init app
 app = Flask(__name__)
@@ -241,6 +241,11 @@ def get_users():
     result = users_schema.dump(users)
     return jsonify(result)
 
+
+# root de l'appli
+@app.route("/", methods = ["GET", "POST"])
+def index():
+    return jsonify({"message": "Bienvenue sur l'api AUTOCAHIER"})
 
 
 
