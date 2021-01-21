@@ -9,19 +9,26 @@ from model import db, ma
 from model import User, Tournee, PDI, UserSchema, TourneeSchema, PDISchema
 import config as config
 
-# init app
-app = Flask(__name__)
-basedir = os.path.abspath(os.path.dirname(__file__))
-# database setup
-app.config['SQLALCHEMY_DATABASE_URI'] = config.DATABASE_URI
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = config.TRACK_MOD
-app.config['SECRET_KEY'] = config.SECRET_KEY
-# database init
-#db = SQLAlchemy(app)
-# marshmallow init
-#ma = Marshmallow(app)
-db.init_app(app)
-ma.init_app(app)
+def create_app():
+    application = Flask(__name__)
+    application.config['SQLALCHEMY_DATABASE_URI'] = config.DATABASE_URI
+    application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = config.TRACK_MOD
+    application.config['SECRET_KEY'] = config.SECRET_KEY
+    db.init_app(application)
+    ma.init_app(application)
+    return application
+
+app = create_app()
+# # init app
+# app = Flask(__name__)
+# basedir = os.path.abspath(os.path.dirname(__file__))
+# # database setup
+# app.config['SQLALCHEMY_DATABASE_URI'] = config.DATABASE_URI
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = config.TRACK_MOD
+# app.config['SECRET_KEY'] = config.SECRET_KEY
+# # database init
+# db.init_app(app)
+# ma.init_app(app)
 
 # Init schema
 pdi_schema = PDISchema()
