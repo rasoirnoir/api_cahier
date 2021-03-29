@@ -3,6 +3,7 @@
 
 import os, datetime, jwt, uuid
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from model import db, ma
@@ -16,6 +17,7 @@ def create_app():
     application.config['SECRET_KEY'] = config.SECRET_KEY
     db.init_app(application)
     ma.init_app(application)
+    CORS(application)
     return application
 
 app = create_app()
@@ -62,26 +64,6 @@ def token_required(f):
         # return f(current_user, *args, **kwargs)
         return f(*args, **kwargs)
     return decorator
-
-@app.after_request
-def add_cors_headers(response):
-    # r = request.referrer[:-1]
-    # if r in white:
-    #     response.headers.add('Access-Control-Allow-Origin', r)
-    #     response.headers.add('Access-Control-Allow-Credentials', 'true')
-    #     response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-    #     response.headers.add('Access-Control-Allow-Headers', 'Cache-Control')
-    #     response.headers.add('Access-Control-Allow-Headers', 'X-Requested-With')
-    #     response.headers.add('Access-Control-Allow-Headers', 'Authorization')
-    #     response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE')
-    response.headers.add('Access-Control-Allow-Origin', "*")
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-    response.headers.add('Access-Control-Allow-Headers', 'Cache-Control')
-    response.headers.add('Access-Control-Allow-Headers', 'X-Requested-With')
-    response.headers.add('Access-Control-Allow-Headers', 'Authorization')
-    # response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE')
-    return response
 
 
 
