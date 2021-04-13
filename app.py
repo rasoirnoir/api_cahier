@@ -232,12 +232,10 @@ def login_user():
 
     user = User.query.filter_by(name=auth.username).first()
 
-    #login_key = hashlib.pbkdf2_hmac('sha256', auth.password.encode('utf-8'), bytes(app.config['SECRET_KEY'], "utf-8"), 100000)
-        
     if (check_password_hash(user.password, auth.password)):
         token = jwt.encode({'public_id': user.public_id, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config['SECRET_KEY'], algorithm='HS256')
         return jsonify({
-            'user': user_schema.jsonify(user), #TODO A vérifier
+            'user': user_schema.dump(user), 
             'token' : bytes(token, "utf-8").decode('UTF-8')
             })
 
@@ -261,11 +259,11 @@ def update_user(id):
     user = User.query.get(id)
 
     name = request.json["name"]
-    password = request.json["password"]
+    hashed_password = generate_password_hash(request.json['password'], method='sha256')
     admin = request.json["admin"]
 
     user.name = name
-    user.password = password
+    user.password = hashed_password
     user.admin = admin
     user.date_maj = datetime.datetime.now()
 
