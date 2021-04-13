@@ -142,8 +142,8 @@ def update_tournee(id):
     tournee = Tournee.query.get(id)
 
     numero = request.json["numero"]
-    date_crea = request.json["date_crea"]
-    date_maj = request.json["date_maj"]
+    # date_crea = request.json["date_crea"]
+    # date_maj = request.json["date_maj"]
 
     tournee.numero = numero
     tournee.date_maj = datetime.datetime.now()
@@ -162,8 +162,8 @@ def update_pdi(id):
     depot = request.json["depot"]
     tournee = request.json["tournee"]
     ordre = request.json["ordre"]
-    date_crea = request.json["date_crea"]
-    date_maj = request.json["date_maj"]
+    # date_crea = request.json["date_crea"]
+    # date_maj = request.json["date_maj"]
 
     pdi.noms = noms
     pdi.adresse = adresse
@@ -236,7 +236,10 @@ def login_user():
         
     if (check_password_hash(user.password, auth.password)):
         token = jwt.encode({'public_id': user.public_id, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config['SECRET_KEY'], algorithm='HS256')
-        return jsonify({'token' : bytes(token, "utf-8").decode('UTF-8')})
+        return jsonify({
+            'user': user_schema.jsonify(user), #TODO A vérifier
+            'token' : bytes(token, "utf-8").decode('UTF-8')
+            })
 
     return jsonify({"message" : "could not login..."})
 
@@ -249,6 +252,38 @@ def get_users():
     users = User.query.all()
     result = users_schema.dump(users)
     return jsonify(result)
+
+
+#update un user
+@app.route("/user/<id>", methods=["PUT"])
+@token_required
+def update_user(id):
+    user = User.query.get(id)
+
+    name = request.json["name"]
+    password = request.json["password"]
+    admin = request.json["admin"]
+
+    user.name = name
+    user.password = password
+    user.admin = admin
+    user.date_maj = datetime.datetime.now()
+
+    db.session.commit()
+    return user_schema.jsonify(user)
+
+# delete user
+@app.route("/user/<id>", methods=["DELETE"])
+@token_required
+def delete_user(id):
+    user = User.query.get(id)
+    db.session.delete(user)
+    db.session.commit()
+
+    return user_schema.jsonify(user)
+
+
+
 
 
 # root de l'appli
